@@ -155,16 +155,6 @@ class StrategyBossZerg
 	
 	std::string techTargetToString(TechUnit target);
 	void drawStrategyBossInformation();
-	// add new items
-	std::map<std::string, std::map<std::string, std::vector<std::string>>> featureNames;
-	std::vector<int> featureValue;
-	void ExtractFeature();			// extract feature
-	void predictUnit();				// predict next unit
-	std::vector<std::vector<double> > paraW1;
-	std::vector<std::vector<double> > paraW2;
-	std::vector<double> paraB1;
-	std::vector<double> paraB2;
-	void modelInit();
 
 public:
 	static StrategyBossZerg & Instance();
@@ -177,8 +167,6 @@ public:
 
 	// Called when the production queue is empty.
 	BuildOrder & freshProductionPlan();
-	// if the prediction is useless, use the rule for next unit prediction
-	BuildOrder & ruleUnit();
 };
 
 };

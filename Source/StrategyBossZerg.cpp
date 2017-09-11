@@ -3,8 +3,8 @@
 #include "InformationManager.h"
 #include "ProductionManager.h"
 #include "ScoutManager.h"
-#include "UnitUtil.h"
 #include "StateManager.h"
+#include "UnitUtil.h"
 #include "ModelWeightInit.h"
 
 using namespace XBot;
@@ -22,90 +22,10 @@ StrategyBossZerg::StrategyBossZerg()
 	, _pendingSupply(-1)
 	, _lastUpdateFrame(-1)
 {
-	modelInit();
 	resetTechScores();
 	setUnitMix(BWAPI::UnitTypes::Zerg_Drone, BWAPI::UnitTypes::None);
 	chooseAuxUnit();          // it chooses None initially
 	chooseEconomyRatio();
-
-	// add feature names
-	featureNames = decltype(featureNames)
-	{
-		//state feature
-		{"state_general_feature", {
-			{ "time_", { "6", "12", "20", "30", "100000" } },
-			{ "minerals_", { "50", "100", "200", "300", "500", "800", "1200", "100000" } },
-			{ "gas_", { "50", "100", "200", "300", "500", "800", "1200", "100000" } },
-			{ "ourSupplyUsed_", { "9", "18", "27", "36", "45", "63", "81", "120", "150", "100000" } }
-		}},
-
-		{ "state_building_feature", {
-			{ "ourHatchery_", { "1", "2", "3", "4", "5", "6", "100000" } },
-			{ "ourLair_", { "hasLair" } },
-			{ "ourHive_", { "hasHive" } },
-			{ "ourExtractor_", { "0", "1", "2", "3", "4", "5", "100000" } },
-			{ "ourSunken_", { "0", "1", "2", "3", "5", "8", "12", "100000" } },
-			{ "ourSpore_", { "0", "1", "2", "3", "5", "8", "12", "100000" } },
-			{ "ourPool_", { "hasPool" } },
-			{ "ourChamber_", { "hasChamber" } },
-			{ "ourDen_", { "hasDen" } },
-			{ "ourNest_", { "hasNest" } },
-			{ "ourSpire_", { "hasSpire" } },
-			{ "ourGSpire_", { "hasGSpire" } },
-			{ "ourCanal_", { "hasCanal" } },
-			{ "ourMound_", { "hasMound" } },
-			{ "ourCavern_", { "hasCavern" } },
-		} },
-
-		{ "state_our_army", {
-			{ "ourLarva_", { "0", "1", "3", "6", "9", "12", "16", "20", "100000" } },
-			{ "ourDrone_", { "0", "2", "3", "4", "6", "8", "9", "12", "15", "20", "30", "100000" } },
-			{ "ourZergling_", { "0", "3", "6", "12", "24", "40", "60", "80", "100", "140", "100000" } },
-			{ "ourHydralisk_", { "0", "6", "12", "18", "24", "36", "48", "60", "100000" } },
-			{ "ourMutalisk_", { "0", "3", "6", "9", "12", "18", "24", "30", "36", "100000" } },
-			{ "ourLurker_", { "0", "3", "6", "9", "12", "18", "24", "30", "36", "100000" } },
-			{ "ourQueen_", { "hasQueen" } },
-			{ "ourDefiler_", { "hasDefiler" } },
-			{ "ourUltralisk_", { "hasUltralisk" } },
-			{ "ourGuardian_", { "hasGuardian" } },
-			{ "ourDevourer_", { "hasDevourer" } },
-		} },
-
-		{ "state_tech_feature", {
-			{ "ourMetabolicBoost_", { "hasUpdateMetabolicBoost" } },
-			{ "ourAdrenalGlands_", { "hasUpdateAdrenalGlands" } },
-			{ "ourMuscularAugments_", { "hasUpdateMuscularAugments" } },
-			{ "ourGroovedSpines_", { "hasUpdateGroovedSpines" } },
-		} },
-
-		{ "state_enemy_feature", {
-			{ "Dragoon_", { "hasDragoon" } },
-			{ "Scout_", { "hasScout" } },
-			{ "Corsair_", { "hasCorsair" } },
-			{ "Carrier_", { "hasCarrier" } },
-			{ "Arbiter_", { "hasArbiter" } },
-			{ "Shuttle_", { "hasShuttle" } },
-			{ "Reaver_", { "hasReaver" } },
-			{ "Observer_", { "hasObserver" } },
-			{ "HighTemplar_", { "hasHighTemplar" } },
-			{ "SDarkTemplar_", { "hasDarkTemplar" } },
-			{ "Archon_", { "hasArchon" } },
-			{ "DarkArchon_", { "hasDarkArchon" } },
-			{ "Firebat_", { "hasFirebat" } },
-			{ "Medic_", { "hasMedic" } },
-			{ "Valture_", { "hasValture" } },
-			{ "Tank_", { "hasTank" } },
-			{ "ScienceVessel_", { "hasScienceVessel" } },
-			{ "MissileTurret_", { "hasMissileTurret" } },
-			{ "Hydralisk_", { "hasHydralisk" } },
-			{ "Mutalisk_", { "hasMutalisk" } },
-			{ "Scourge_", { "hasScourge" } },
-			{ "Lurker_", { "hasLurker" } },
-			{ "Ultralisk_", { "hasUltralisk" } },
-			{ "Guardian_", { "hasGuardian" } },
-			{ "Devourer_", { "hasDevourer" } },
-		} }
-	};
 }
 
 // -- -- -- -- -- -- -- -- -- -- --
@@ -200,41 +120,39 @@ void StrategyBossZerg::updateGameState()
 	minerals = std::max(0, _self->minerals() - BuildingManager::Instance().getReservedMinerals());
 	gas = std::max(0, _self->gas() - BuildingManager::Instance().getReservedGas());
 
+	auto & state = StateManager::Instance();
 	// Unit stuff, including uncompleted units.
-	nLairs = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Lair);
-	nHives = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hive);
-	nHatches = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hatchery)
-		+ nLairs + nHives;
-	nCompletedHatches = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Hatchery)
-		+ nLairs + nHives;
-	nSpores = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spore_Colony);
+	nLairs = state.lair_count;
+	nHives = state.hive_count;
+	nHatches = state.hatchery_count + nLairs + nHives;
+	nCompletedHatches = state.hatchery_completed + nLairs + nHives;
+	nSpores = state.spore_colony_count;
 
 	// nGas = number of geysers ready to mine (extractor must be complete)
 	// nFreeGas = number of geysers free to be taken (no extractor, even uncompleted)
 	InformationManager::Instance().getMyGasCounts(nGas, nFreeGas);
 
-	nDrones = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Drone);
+	nDrones = state.drone_count;
 	nMineralDrones = WorkerManager::Instance().getNumMineralWorkers();
 	nGasDrones = WorkerManager::Instance().getNumGasWorkers();
-	nLarvas = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva);
+	nLarvas = state.larva_count;
 
-	nLings = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Zergling);
-	nHydras = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk);
-	nMutas = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk);
-	nGuardians = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Guardian);
-	nDevourers = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Devourer);
+	nLings = state.zergling_count;
+	nHydras = state.hydralisk_count;
+	nMutas = state.mutalisk_count;
+	nGuardians = state.guardian_count;
+	nDevourers = state.devourer_count;
 
 	// Tech stuff. It has to be completed for the tech to be available.
-	nEvo = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Evolution_Chamber);
-	hasPool = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) > 0;
-	hasDen = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) > 0;
-	hasSpire = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Spire) > 0 ||
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0;
-	hasGreaterSpire = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0;
+	nEvo = state.evolution_chamber_completed;
+	hasPool = state.spawning_pool_completed > 0;
+	hasDen = state.hydralisk_den_completed > 0;
+	hasSpire = state.spire_completed + state.greater_spire_count > 0;
+	hasGreaterSpire = state.greater_spire_completed > 0;
 	// We have lurkers if we have lurker aspect and we have a den to make the hydras.
 	hasLurkers = hasDen && _self->hasResearched(BWAPI::TechTypes::Lurker_Aspect);
-	hasQueensNest = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Queens_Nest) > 0;
-	hasUltra = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) > 0;
+	hasQueensNest = state.queens_nest_completed > 0;
+	hasUltra = state.ultralisk_cavern_completed > 0;
 	// Enough upgrades that it is worth making ultras: Speed done, armor underway.
 	hasUltraUps = _self->getUpgradeLevel(BWAPI::UpgradeTypes::Anabolic_Synthesis) != 0 &&
 		(_self->getUpgradeLevel(BWAPI::UpgradeTypes::Chitinous_Plating) != 0 ||
@@ -245,8 +163,8 @@ void StrategyBossZerg::updateGameState()
 	// NOTE The two are different in game, but even more different in the bot because
 	//      of a BWAPI 4.1.2 bug: You can't do lair research in a hive.
 	//      This code reflects the bug so we can work around it as much as possible.
-	hasHiveTech = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Hive) > 0;
-	hasLair = UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Lair) > 0;
+	hasHiveTech = state.hive_completed > 0;
+	hasLair = state.lair_completed > 0;
 	hasLairTech = hasLair || nHives > 0;
 	
 	outOfBook = ProductionManager::Instance().isOutOfBook();
@@ -332,12 +250,13 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 		return false;
 	}
 
+	auto & state = StateManager::Instance();
 	const MacroAct act = queue.getHighestPriorityItem().macroAct;
 
 	// It costs gas that we don't have and won't get.
 	if (nGas == 0 && act.gasPrice() > gas &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Extractor) == 0)
+		state.extractor_count == 0)
 	{
 		return true;
 	}
@@ -366,12 +285,12 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 		if (upInQueue == BWAPI::UpgradeTypes::Muscular_Augments || upInQueue == BWAPI::UpgradeTypes::Grooved_Spines)
 		{
 			return !hasDen &&
-				UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den);
+				state.hydralisk_den_count == 0 && state.hydralisk_den_being_built == 0;
 		}
 
 		if (upInQueue == BWAPI::UpgradeTypes::Metabolic_Boost)
 		{
-			return !hasPool && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0;
+			return !hasPool && state.spawning_pool_count == 0;
 		}
 
 		if (upInQueue == BWAPI::UpgradeTypes::Adrenal_Glands)
@@ -401,7 +320,7 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 		if (techInQueue == BWAPI::TechTypes::Lurker_Aspect)
 		{
 			return !hasLair && nLairs == 0 ||
-				!hasDen && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den) ||
+				!hasDen && state.hydralisk_den_count == 0 && state.hydralisk_den_being_built == 0 ||
 				_self->isResearching(BWAPI::TechTypes::Lurker_Aspect) ||
 				_self->hasResearched(BWAPI::TechTypes::Lurker_Aspect);
 		}
@@ -442,12 +361,12 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Zergling)
 	{
 		// We lost the tech.
-		return !hasPool && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0;
+		return !hasPool && state.spawning_pool_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Hydralisk)
 	{
 		// We lost the tech.
-		return !hasDen && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) == 0;
+		return !hasDen && state.hydralisk_den_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Lurker)
 	{
@@ -459,19 +378,19 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 	{
 		// We lost the tech.
 		return !hasSpire &&
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0 &&
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) == 0;
+			state.spire_count == 0 &&
+			state.greater_spire_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Ultralisk)
 	{
 		// We lost the tech.
-		return !hasUltra && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) == 0;
+		return !hasUltra && state.ultralisk_cavern_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Guardian || nextInQueue == BWAPI::UnitTypes::Zerg_Devourer)
 	{
 		// We lost the tech, or we don't have a mutalisk to morph.
 		return nMutas == 0 ||
-			!hasGreaterSpire && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) == 0;
+			!hasGreaterSpire && state.greater_spire_count == 0;
 	}
 
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Hatchery)
@@ -485,38 +404,38 @@ bool StrategyBossZerg::nextInQueueIsUseless(BuildOrderQueue & queue) const
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Lair)
 	{
-		return !hasPool && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0 ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hatchery) == 0;
+		return !hasPool && state.spawning_pool_count == 0 ||
+			state.hatchery_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Hive)
 	{
-		return UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Queens_Nest) == 0 ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Lair) == 0 ||
+		return state.queens_nest_count == 0 ||
+			state.lair_count == 0 ||
 			_self->isUpgrading(BWAPI::UpgradeTypes::Pneumatized_Carapace) ||
 			_self->isUpgrading(BWAPI::UpgradeTypes::Ventral_Sacs);
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Sunken_Colony)
 	{
-		return !hasPool && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0 ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Creep_Colony) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Creep_Colony);
+		return !hasPool && state.spawning_pool_count == 0 ||
+			state.creep_colony_count == 0 && state.creep_colony_being_built == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Spore_Colony)
 	{
-		return nEvo == 0 && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Evolution_Chamber) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Evolution_Chamber) ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Creep_Colony) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Creep_Colony);
+		return nEvo == 0 && state.evolution_chamber_count == 0 && state.evolution_chamber_being_built == 0 ||
+			state.creep_colony_count == 0 && state.creep_colony_being_built == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Hydralisk_Den)
 	{
-		return !hasPool && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0;
+		return !hasPool && state.spawning_pool_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Spire)
 	{
-		return !hasLairTech && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Lair) == 0;
+		return !hasLairTech && state.lair_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Greater_Spire)
 	{
 		return nHives == 0 ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0;
+			state.spire_count == 0;
 	}
 	if (nextInQueue == BWAPI::UnitTypes::Zerg_Extractor)
 	{
@@ -728,6 +647,7 @@ bool StrategyBossZerg::takeUrgentAction(BuildOrderQueue & queue)
 // React to lesser emergencies.
 void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 {
+	auto & state = StateManager::Instance();
 	// Find the next thing remaining in the queue, but only if it is a unit.
 	const BWAPI::UnitType nextInQueue = queue.getNextUnit();
 
@@ -737,7 +657,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 		nextInQueue != BWAPI::UnitTypes::Zerg_Scourge &&
 		(_enemyRace != BWAPI::Races::Zerg || nMutas >= 5))
 	{
-		int totalScourge = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Scourge) +
+		int totalScourge = state.scourge_count +
 			2 * numInEgg(BWAPI::UnitTypes::Zerg_Scourge) +
 			2 * queue.numInQueue(BWAPI::UnitTypes::Zerg_Scourge);
 
@@ -855,8 +775,8 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 	// Macro hatcheries are automatic only out of book. Book openings must take care of themselves.
 	const int hatcheriesUnderConstruction =
 		BuildingManager::Instance().getNumUnstarted(BWAPI::UnitTypes::Zerg_Hatchery) +
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hatchery) -
-		UnitUtil::GetCompletedUnitCount(BWAPI::UnitTypes::Zerg_Hatchery);
+		state.hatchery_count -
+		state.hatchery_completed;
 	if (outOfBook && minerals >= 300 && nLarvas == 0 && nHatches < 15 && nDrones > 9 &&
 		nextInQueue != BWAPI::UnitTypes::Zerg_Hatchery &&
 		nextInQueue != BWAPI::UnitTypes::Zerg_Overlord &&
@@ -900,7 +820,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 		}
 		else if (nEvo == 0 && nDrones >= 9 && outOfBook && hasPool &&
 			!queue.anyInQueue(BWAPI::UnitTypes::Zerg_Evolution_Chamber) &&
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Evolution_Chamber) == 0 &&
+			state.evolution_chamber_count == 0 &&
 			!isBeingBuilt(BWAPI::UnitTypes::Zerg_Evolution_Chamber))
 		{
 			queue.queueAsHighestPriority(BWAPI::UnitTypes::Zerg_Evolution_Chamber);
@@ -908,7 +828,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 		else if (!hasSpire && hasLairTech && outOfBook &&
 			minerals >= 200 && gas >= 150 && nGas > 0 && nDrones > 9 &&
 			!queue.anyInQueue(BWAPI::UnitTypes::Zerg_Spire) &&
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0 &&
+			state.spire_count == 0 &&
 			!isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
 		{
 			queue.queueAsHighestPriority(BWAPI::UnitTypes::Zerg_Spire);
@@ -929,6 +849,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 // This is part of freshProductionPlan().
 bool StrategyBossZerg::rebuildCriticalLosses()
 {
+	auto & state = StateManager::Instance();
 	// 1. Add up to 9 drones if we're below.
 	for (int i = nDrones; i < std::min(9, maxDrones); ++i)
 	{
@@ -939,7 +860,7 @@ bool StrategyBossZerg::rebuildCriticalLosses()
 	// 2. If there is no spawning pool, we always need that.
 	if (!hasPool &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Spawning_Pool) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) == 0)
+		state.spawning_pool_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Spawning_Pool);
 		// If we're low on drones, replace the drone.
@@ -959,6 +880,7 @@ bool StrategyBossZerg::rebuildCriticalLosses()
 // regular production plan will concentrate on combat units.
 void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 {
+	auto & state = StateManager::Instance();
 	// for anti cannon, don't apply sunken
 	if (!StateManager::Instance().flyer_visit_position.empty())
 	{
@@ -995,9 +917,8 @@ void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 	}
 
 	// check rush
-	if (StateManager::Instance().being_rushed)
+	if (state.being_rushed)
 	{
-		auto & state = StateManager::Instance();
 		// terran
 		// max 4 sunken
 		if (_enemy->getRace() == BWAPI::Races::Terran)
@@ -1127,21 +1048,6 @@ void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 		nextUnit != BWAPI::UnitTypes::Zerg_Creep_Colony &&
 		nextUnit != BWAPI::UnitTypes::Zerg_Sunken_Colony)
 	{
-
-		// Only a few marines, no firebats or medics: Pull drones.
-		/* TODO testing showed this doesn't work as intended
-		if (enemyAcademyUnits == 0 && !_emergencyDronePull && ourSunkens == 0 &&
-			(enemyMarines <= 3 || enemyMarines <= 4 && nLings >= 2))
-		{
-			queue.queueAsHighestPriority(MacroAct(MacroCommandType::PullWorkers, 1 + 2 * enemyMarines));
-		}
-		else if (_emergencyDronePull && (enemyAcademyUnits > 0 || enemyMarines > 4))
-		{
-			queue.queueAsHighestPriority(MacroCommandType::ReleaseWorkers);
-			_emergencyDronePull = false;
-		}
-		*/
-
 		// Also make zerglings and/or sunkens.
 		if (fearLevel <= 4 && nLarvas > 0)
 		{
@@ -1165,7 +1071,7 @@ void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 		const bool inProgress =
 			BuildingManager::Instance().getNumUnstarted(BWAPI::UnitTypes::Zerg_Sunken_Colony) > 0 ||
 			BuildingManager::Instance().getNumUnstarted(BWAPI::UnitTypes::Zerg_Creep_Colony) > 0 ||
-			UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Creep_Colony) > 0;
+			state.creep_colony_count > 0;
 
 		if (makeOne && !inProgress)
 		{
@@ -1938,7 +1844,7 @@ void StrategyBossZerg::chooseAuxUnit()
 		techScores[int(TechUnit::Lurkers)] > 0)
 	{
 		_auxUnit = BWAPI::UnitTypes::Zerg_Lurker;
-		_auxUnitCount = UnitUtil::GetCompletedUnitCount(_mineralUnit) / 20;
+		_auxUnitCount = InformationManager::Instance().getNumSelfCompletedUnits(_mineralUnit) / 20;
 	}
 }
 
@@ -2149,770 +2055,9 @@ void StrategyBossZerg::handleUrgentProductionIssues(BuildOrderQueue & queue)
 // Fill up the production queue with new stuff.
 BuildOrder & StrategyBossZerg::freshProductionPlan()
 {
-	_latestBuildOrder.clearAll();
-	updateGameState();
-	// We always want at least 9 drones and a spawning pool.
-	if (rebuildCriticalLosses())
-	{
-		return _latestBuildOrder;
-	}
-	ExtractFeature();
-	predictUnit();
+	auto & state = StateManager::Instance();
+	auto & info = InformationManager::Instance();
 
-	return _latestBuildOrder;
-
-}
-
-void StrategyBossZerg::ExtractFeature(){
-
-	featureValue.clear();
-	////////////////////////////state_general_feature/////////////////////////////////////
-	int curTimeMinuts = BWAPI::Broodwar->getFrameCount() / (24 * 60);
-	int count = 0;
-	for (auto item : featureNames["state_general_feature"]["time_"])
-	{
-		if (curTimeMinuts <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_general_feature"]["time_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 5, "time_ error");
-	int Minerals = _self->minerals(); // current amount of minerals/ore that this player has
-	count = 0;
-	for (auto item : featureNames["state_general_feature"]["minerals_"])
-	{
-		if (Minerals <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_general_feature"]["minerals_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 13, "minerals_ error");
-
-	int Gas = _self->gas(); // current amount of vespene gas that this player has
-	count = 0;
-	for (auto item : featureNames["state_general_feature"]["gas_"])
-	{
-		if (Gas <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_general_feature"]["gas_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 21, "gas_ error");
-
-	int SupplyUsed = _self->supplyUsed();//current amount of supply that the player is using for unit control
-	count = 0;
-	for (auto item : featureNames["state_general_feature"]["ourSupplyUsed_"])
-	{
-		if (SupplyUsed <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_general_feature"]["ourSupplyUsed_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 31, "ourSupplyUsed_ error");
-	////////////////////////////////state_building_feature////////////////////////////////
-	int Hatchery = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hatchery);
-	count = 0;
-	for (auto item : featureNames["state_building_feature"]["ourHatchery_"])
-	{
-		if (Hatchery <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_building_feature"]["ourHatchery_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 38, "ourHatchery_ error");
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Lair) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	UAB_ASSERT(featureValue.size() == 39, "Zerg_Lair error");
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hive) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 40, "Zerg_Hive error");
-
-	int Extractor = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Extractor);
-	count = 0;
-	for (auto item : featureNames["state_building_feature"]["ourExtractor_"])
-	{
-		if (Extractor <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_building_feature"]["ourExtractor_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 47, "ourExtractor_ error");
-	int Sunken = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Sunken_Colony);
-	count = 0;
-	for (auto item : featureNames["state_building_feature"]["ourSunken_"])
-	{
-		if (Sunken <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_building_feature"]["ourSunken_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 55, "ourSunken_ error");
-	int Spore = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spore_Colony);
-	count = 0;
-	for (auto item : featureNames["state_building_feature"]["ourSpore_"])
-	{
-		if (Spore <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_building_feature"]["ourSpore_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 63, "ourSpore_ error");
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Evolution_Chamber) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Queens_Nest) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Nydus_Canal) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Defiler_Mound) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 72, "has_ error");
-	////////////////////////////////state_our_army////////////////////////////////
-	int Larva = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourLarva_"])
-	{
-		if (Larva <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourLarva_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 81, "ourLarva_ error");
-
-	int Drone = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Drone);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourDrone_"])
-	{
-		if (Drone <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourDrone_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 93, "ourDrone_ error");
-	int Zergling = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Zergling);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourZergling_"])
-	{
-		if (Zergling <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourZergling_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 104, "ourZergling_ error");
-	int Hydralisk = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourHydralisk_"])
-	{
-		if (Hydralisk <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourHydralisk_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 113, "ourHydralisk_ error");
-
-	int Mutalisk = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourMutalisk_"])
-	{
-		if (Mutalisk <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourMutalisk_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 123, "ourMutalisk_ error");
-
-	int Lurker = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Lurker);
-	count = 0;
-	for (auto item : featureNames["state_our_army"]["ourLurker_"])
-	{
-		if (Lurker <= std::stoi(item))
-		{
-			featureValue.push_back(1);
-			count++;
-			for (; count<featureNames["state_our_army"]["ourLurker_"].size(); count++)
-				featureValue.push_back(0);
-			break;
-		}
-		else
-		{
-			featureValue.push_back(0);
-			count++;
-		}
-	}
-	UAB_ASSERT(featureValue.size() == 133, "ourLurker_ error");
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Queen) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Defiler) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Guardian) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-
-	if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Devourer) > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 138, "hasQueen_hasDevourer error");
-	////////////////////////////////state_tech_feature////////////////////////////////
-	int upgraded_Metabolic_Boost = !(_self->getUpgradeLevel(BWAPI::UpgradeTypes::Metabolic_Boost) == 0 &&
-		!_self->isUpgrading(BWAPI::UpgradeTypes::Metabolic_Boost));
-	if (upgraded_Metabolic_Boost > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 139, "hasUpdateMetabolicBoost error");
-	int upgraded_Adrenal_Glands = !(_self->getUpgradeLevel(BWAPI::UpgradeTypes::Adrenal_Glands) == 0 &&
-		!_self->isUpgrading(BWAPI::UpgradeTypes::Adrenal_Glands));
-	if (upgraded_Adrenal_Glands > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 140, "hasUpdateAdrenalGlands error");
-	int upgraded_Muscular_Augments = !(_self->getUpgradeLevel(BWAPI::UpgradeTypes::Muscular_Augments) == 0 &&
-		!_self->isUpgrading(BWAPI::UpgradeTypes::Muscular_Augments));
-	if (upgraded_Muscular_Augments > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 141, "hasUpdateMuscularAugments error");
-	int upgraded_Grooved_Spines = !(_self->getUpgradeLevel(BWAPI::UpgradeTypes::Grooved_Spines) == 0 &&
-		!_self->isUpgrading(BWAPI::UpgradeTypes::Grooved_Spines));
-	if (upgraded_Grooved_Spines > 0)
-		featureValue.push_back(1);
-	else
-		featureValue.push_back(0);
-	UAB_ASSERT(featureValue.size() == 142, "hasUpdateGroovedSpines error");
-	////////////////////////////////state_enemy_feature////////////////////////////////
-	if (_enemyRace == BWAPI::Races::Protoss)
-	{
-		std::vector<int> Protess_Enemy(12, 0);
-		for (const auto & kv : InformationManager::Instance().getUnitData(_enemy).getUnits())
-		{
-			const UnitInfo & ui(kv.second);
-			if (ui.type == BWAPI::UnitTypes::Protoss_Dragoon)
-				Protess_Enemy[0] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Scout)
-				Protess_Enemy[1] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Corsair)
-				Protess_Enemy[2] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Carrier)
-				Protess_Enemy[3] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Arbiter)
-				Protess_Enemy[4] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Shuttle)
-				Protess_Enemy[5] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Reaver)
-				Protess_Enemy[6] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Observer)
-				Protess_Enemy[7] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_High_Templar)
-				Protess_Enemy[8] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Dark_Templar)
-				Protess_Enemy[9] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Archon)
-				Protess_Enemy[10] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Protoss_Dark_Archon)
-				Protess_Enemy[11] += 1;
-			else
-				continue;
-		}
-		for (int aaa = 0; aaa < Protess_Enemy.size(); aaa++){
-			if (Protess_Enemy[aaa]>0)
-				featureValue.push_back(1);
-			else
-				featureValue.push_back(0);
-		}
-		for (int aaa = 0; aaa < 13; aaa++)
-			featureValue.push_back(0);
-	}
-	else if (_enemyRace == BWAPI::Races::Terran)
-	{
-		for (int aaa = 0; aaa < 12; aaa++)
-			featureValue.push_back(0);
-		std::vector<int> Terran_Enemy(6, 0);
-		for (const auto & kv : InformationManager::Instance().getUnitData(_enemy).getUnits())
-		{
-			const UnitInfo & ui(kv.second);
-			if (ui.type == BWAPI::UnitTypes::Terran_Firebat)
-				Terran_Enemy[0] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Terran_Medic)
-				Terran_Enemy[1] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Terran_Vulture || ui.type == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine)
-				Terran_Enemy[2] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Terran_Siege_Tank_Siege_Mode || ui.type == BWAPI::UnitTypes::Terran_Siege_Tank_Tank_Mode)
-				Terran_Enemy[3] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Terran_Science_Vessel)
-				Terran_Enemy[4] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Terran_Missile_Turret)
-				Terran_Enemy[5] += 1;
-			else
-				continue;
-		}
-		for (int aaa = 0; aaa < Terran_Enemy.size(); aaa++){
-			if (Terran_Enemy[aaa] > 0)
-				featureValue.push_back(1);
-			else
-				featureValue.push_back(0);
-		}
-		for (int aaa = 0; aaa < 7; aaa++)
-			featureValue.push_back(0);
-	}
-
-	else if (_enemyRace == BWAPI::Races::Zerg)
-	{
-		for (int aaa = 0; aaa < 18; aaa++)
-			featureValue.push_back(0);
-		std::vector<int> Zerg_Enemy(7, 0);
-		for (const auto & kv : InformationManager::Instance().getUnitData(_enemy).getUnits())
-		{
-			const UnitInfo & ui(kv.second);
-			if (ui.type == BWAPI::UnitTypes::Zerg_Hydralisk)
-				Zerg_Enemy[0] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Mutalisk)
-				Zerg_Enemy[1] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Scourge)
-				Zerg_Enemy[2] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Lurker)
-				Zerg_Enemy[3] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Ultralisk)
-				Zerg_Enemy[4] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Guardian)
-				Zerg_Enemy[5] += 1;
-			else if (ui.type == BWAPI::UnitTypes::Zerg_Devourer)
-				Zerg_Enemy[6] += 1;
-			else
-				continue;
-		}
-		for (int aaa = 0; aaa < Zerg_Enemy.size(); aaa++){
-			if (Zerg_Enemy[aaa] > 0)
-				featureValue.push_back(1);
-			else
-				featureValue.push_back(0);
-		}
-	}
-	else
-	{
-		for (int aaa = 0; aaa < 25; aaa++)
-			featureValue.push_back(0);
-	}
-	UAB_ASSERT(featureValue.size() == 167, "EnemyFeature_ error %d", featureValue.size());
-	//BWAPI::Broodwar->printf("feature extraction size: %d\n", featureValue.size());
-}
-
-void StrategyBossZerg::predictUnit()
-{
-	if (StateManager::Instance().being_rushed)
-	{
-		ruleUnit();
-		return;
-	}
-	//paraW1,paraB1,paraW2,paraB2: parameters of the mlp
-	int position = 0;
-	if (featureValue.size() == 167){
-		std::vector<double> layer1Output;
-		std::vector<double> layer2Output;
-		for (int i = 0; i < paraW1[0].size(); i++){
-			float sum = 0;
-			for (int j = 0; j < paraW1.size(); j++){
-				sum += featureValue[j] * paraW1[j][i] + paraB1[i];
-			}
-			layer1Output.push_back(sum > 0 ? sum : 0);
-		}
-		for (int i = 0; i < paraW2[0].size(); i++){
-			float sum = 0;
-			for (int j = 0; j < paraW2.size(); j++){
-				sum += layer1Output[j] * paraW2[j][i] + paraB2[i];
-			}
-			layer2Output.push_back(sum);
-		}
-		double value = std::numeric_limits<double>::min();
-		for (int i = 0; i < layer2Output.size(); i++){
-			if (layer2Output[i] > value){
-				position = i;
-				value = layer2Output[i];
-			}
-		}
-	}
-	else{
-		position = -1;
-		//BWAPI::Broodwar->printf("feature size: %d\n", featureValue.size());
-
-	}
-		
-
-
-	// predicting based on our mlp model, if the condition is not satisfied, then use the rules
-	// we ignore the producing of drones, leave it to emergency. 
-	bool action_or_not = false;
-
-	if (position == 0){		//zergling
-		if (BWAPI::Broodwar->getFrameCount() < 5760 && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva)>0){
-			for (int i = 0; i < 2; i++){
-				produce(BWAPI::UnitTypes::Zerg_Zergling);
-			}
-			action_or_not = true;
-		}
-	}
-	if (position == 1){		//hydralisk	
-		if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den))
-			&& WorkerManager::Instance().isCollectingGas() && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva)>0
-			&& (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& BWAPI::Broodwar->getFrameCount() < 10000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Hydralisk);
-				}
-				action_or_not = true;
-			}
-		}
-		else if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den))
-			&& !WorkerManager::Instance().isCollectingGas()
-			&& (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0 && !isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& BWAPI::Broodwar->getFrameCount() < 10000){
-			if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Extractor) > 0){
-				produce(MacroCommandType::StartGas);
-				action_or_not = false;
-			}
-			else if (!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor)){
-				produce((BWAPI::UnitTypes::Zerg_Extractor));
-				action_or_not = true;
-			}
-		}
-	}
-	if (position == 2){		//mutalisk
-		if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& WorkerManager::Instance().isCollectingGas() && UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva)>0
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Mutalisk);
-				}
-				action_or_not = true;
-			}
-		}
-		else if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& !WorkerManager::Instance().isCollectingGas()
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Extractor) > 0){
-				produce(MacroCommandType::StartGas);
-				action_or_not = false;
-			}
-			else if (!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor)){
-				produce((BWAPI::UnitTypes::Zerg_Extractor));
-				action_or_not = true;
-			}
-		}
-	}
-	if (position == 3){		//Zerg Scourge
-		if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& WorkerManager::Instance().isCollectingGas() && InformationManager::Instance().enemyHasAirTech()
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva)>0
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Scourge);
-				}
-				action_or_not = true;
-			}
-		}
-		else if ((UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire))
-			&& !WorkerManager::Instance().isCollectingGas() && InformationManager::Instance().enemyHasAirTech()
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Extractor) > 0){
-				produce(MacroCommandType::StartGas);
-				action_or_not = false;
-			}
-			else if (!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor)){
-				produce((BWAPI::UnitTypes::Zerg_Extractor));
-				action_or_not = true;
-			}
-		}
-	}
-	if (position == 4){		//Zerg Lurker
-		if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 && hasDen
-			&& nDrones >= 9 && WorkerManager::Instance().isCollectingGas() &&
-			(_self->hasResearched(BWAPI::TechTypes::Lurker_Aspect) || _self->isResearching(BWAPI::TechTypes::Lurker_Aspect))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk)>0
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			if (_self->isResearching(BWAPI::TechTypes::Lurker_Aspect))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Lurker);
-				}
-				action_or_not = true;
-			}
-		}
-		else if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 && hasDen
-			&& nDrones >= 9 && WorkerManager::Instance().isCollectingGas() &&
-			(!_self->hasResearched(BWAPI::TechTypes::Lurker_Aspect) && !_self->isResearching(BWAPI::TechTypes::Lurker_Aspect))
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			produce(BWAPI::TechTypes::Lurker_Aspect);
-			action_or_not = true;
-		}
-		else if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire)>0 && hasDen
-			&& nDrones >= 9 && !WorkerManager::Instance().isCollectingGas() &&
-			(_self->hasResearched(BWAPI::TechTypes::Lurker_Aspect) || _self->isResearching(BWAPI::TechTypes::Lurker_Aspect))
-			&& BWAPI::Broodwar->getFrameCount() < 15000){
-			produce(MacroCommandType::StartGas);
-			action_or_not = false;
-		}
-	}
-	if (position == 5){		//Zerg Ultralisk
-		if (nDrones >= 12 && WorkerManager::Instance().isCollectingGas() &&
-			(UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) > 0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva)>0
-			&& BWAPI::Broodwar->getFrameCount() < 25000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Ultralisk);
-				}
-				action_or_not = true;
-			}
-		}
-	}
-	if (position == 6){		//Zerg Guardian
-		if (nDrones >= 15 && WorkerManager::Instance().isCollectingGas() &&
-			(UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk)>0
-			&& BWAPI::Broodwar->getFrameCount() < 25000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Guardian);
-				}
-				action_or_not = true;
-			}
-		}
-		else if (nDrones >= 15 && WorkerManager::Instance().isCollectingGas() &&
-			(UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk) == 0
-			&& BWAPI::Broodwar->getFrameCount() < 25000){
-			if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva) > 0){
-				produce(BWAPI::UnitTypes::Zerg_Mutalisk);
-				produce(BWAPI::UnitTypes::Zerg_Mutalisk);
-				action_or_not = true;
-			}
-			else
-				action_or_not = false;
-		}
-	}
-	if (position == 7){		//Zerg Devourer
-		if (nDrones >= 15 && WorkerManager::Instance().isCollectingGas() && InformationManager::Instance().enemyHasAirTech() &&
-			(UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk) > 0
-			&& BWAPI::Broodwar->getFrameCount() < 25000){
-			if (isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-				action_or_not = false;
-			else{
-				for (int i = 0; i < 2; i++){
-					produce(BWAPI::UnitTypes::Zerg_Devourer);
-				}
-				action_or_not = true;
-			}
-		}
-		else if (nDrones >= 15 && WorkerManager::Instance().isCollectingGas() && InformationManager::Instance().enemyHasAirTech() &&
-			(UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) > 0 || isBeingBuilt(BWAPI::UnitTypes::Zerg_Greater_Spire))
-			&& UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk) == 0
-			&& BWAPI::Broodwar->getFrameCount() < 25000){
-			if (UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Larva) > 0){
-				produce(BWAPI::UnitTypes::Zerg_Mutalisk);
-				produce(BWAPI::UnitTypes::Zerg_Mutalisk);
-				action_or_not = true;
-			}
-			else
-				action_or_not = false;
-		}
-	}
-	//BWAPI::Broodwar->printf("Predict position is: %d\n", position);
-	//BWAPI::Broodwar->printf("action_or_not: %d\n", action_or_not);
-
-	if (!action_or_not)
-		ruleUnit();
-}
-
-BuildOrder & StrategyBossZerg::ruleUnit(){
 	updateGameState();
 	chooseStrategy();
 	int larvasLeft = nLarvas;
@@ -2950,7 +2095,7 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	if ((_techTarget == TechUnit::Hydralisks || _techTarget == TechUnit::Lurkers && lurkerDenTiming()) &&
 		!hasDen && hasPool && nDrones >= 10 && nGas > 0 &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk_Den) == 0)
+		state.hydralisk_den_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Hydralisk_Den);
 		mineralsLeft -= 100;
@@ -3001,7 +2146,7 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	if (!hasSpire && airTechUnit(_techTarget) && hasLairTech && nGas > 0 &&
 		(nDrones >= 13 || _enemyRace == BWAPI::Races::Zerg && nDrones >= 9) &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Spire) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Spire) == 0)
+		state.spire_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Spire);
 		mineralsLeft -= 200;
@@ -3010,7 +2155,7 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	// Make a greater spire.
 	if ((_techTarget == TechUnit::Guardians || _techTarget == TechUnit::Devourers) &&
 		hasHiveTech && hasSpire && !hasGreaterSpire && nGas >= 2 && nDrones >= 15 &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Greater_Spire) == 0)
+		state.greater_spire_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Greater_Spire);
 		mineralsLeft -= 100;
@@ -3019,11 +2164,11 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	// Make a queen's nest. Make it later versus zerg.
 	if (!hasQueensNest && hasLair && nGas >= 2 && !_emergencyGroundDefense &&
 		(hiveTechUnit(_techTarget) && nDrones >= 16 ||
-		armorUps == 2 ||
-		nDrones >= 24 ||
-		_enemyRace != BWAPI::Races::Zerg && nDrones >= 20) &&
+			armorUps == 2 ||
+			nDrones >= 24 ||
+			_enemyRace != BWAPI::Races::Zerg && nDrones >= 20) &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Queens_Nest) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Queens_Nest) == 0)
+		state.queens_nest_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Queens_Nest);
 		mineralsLeft -= 150;
@@ -3043,7 +2188,7 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	// Move toward ultralisks.					// qi: ½¨ÔìÃÍáï
 	if (_techTarget == TechUnit::Ultralisks && !hasUltra && hasHiveTech && nDrones >= 24 && nGas >= 3 &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) &&
-		UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern) == 0)
+		state.ultralisk_cavern_count == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Ultralisk_Cavern);
 		mineralsLeft -= 150;
@@ -3186,9 +2331,9 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 
 	// Before the main production, squeeze out one aux unit, if we want one. Only one per call.
 	if (_auxUnit != BWAPI::UnitTypes::None &&
-		UnitUtil::GetAllUnitCount(_auxUnit) < _auxUnitCount &&
+		info.getNumSelfUnits(_auxUnit) < _auxUnitCount &&
 		larvasLeft > 0 &&
-		UnitUtil::GetCompletedUnitCount(_mineralUnit) > 2 &&
+		info.getNumSelfCompletedUnits(_mineralUnit) > 2 &&
 		!_emergencyGroundDefense)
 	{
 		BWAPI::UnitType auxType = findUnitType(_auxUnit);
@@ -3205,7 +2350,7 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 	// NOTE Gas usage above in the code is not counted at all.
 	if (_gasUnit == BWAPI::UnitTypes::None ||
 		gas < _gasUnit.gasPrice() ||
-		double(UnitUtil::GetAllUnitCount(_mineralUnit)) / double(UnitUtil::GetAllUnitCount(_gasUnit)) < 0.1)
+		double(info.getNumSelfUnits(_mineralUnit)) / double(info.getNumSelfUnits(_gasUnit)) < 0.1)
 	{
 		// Only the mineral unit.
 		while (larvasLeft >= 0 && mineralsLeft >= 0)
@@ -3262,80 +2407,4 @@ BuildOrder & StrategyBossZerg::ruleUnit(){
 		}
 	}
 	return _latestBuildOrder;
-
-}
-
-void StrategyBossZerg::modelInit(){
-	// for w2
-
-	paraW1 = _paraW1;
-	paraW2 = _paraW2;
-	paraB1 = _paraB1;
-	paraB2 = _paraB2;
-
-	/*
-	std::ifstream  fin("bwapi-data\\AI\\cnnfor8_w2.txt");
-	char line[1024] = { 0 };
-	std::string  x = "";
-	while (fin.getline(line, sizeof(line)))
-	{
-		std::stringstream  word(line);
-		std::vector<float>  temp;
-		for (int i = 0; i < 8; i++){
-			word >> x;
-			float y = stof(x);
-			temp.push_back(y);
-		}
-		paraW2.push_back(temp);
-	}
-	fin.clear();
-	fin.close();
-
-	// for w1
-	std::ifstream  fin1("bwapi-data\\AI\\cnnfor8_w1.txt");
-	x = "";
-	while (fin1.getline(line, sizeof(line)))
-	{
-		std::stringstream  word(line);
-		std::vector<float>  temp;
-		for (int i = 0; i < 32; i++){
-			word >> x;
-			float y = stof(x);
-			temp.push_back(y);
-		}
-		paraW1.push_back(temp);
-	}
-	fin1.clear();
-	fin1.close();
-
-	// for b1
-	std::ifstream  fin2("bwapi-data\\AI\\cnnfor8_b1.txt");
-	x = "";
-	while (fin2.getline(line, sizeof(line)))
-	{
-		std::stringstream  word(line);
-		for (int i = 0; i < 1; i++){
-			word >> x;
-			float y = stof(x);
-			paraB1.push_back(y);
-		}
-	}
-	fin2.clear();
-	fin2.close();
-
-	// for b1
-	std::ifstream  fin3("bwapi-data\\AI\\cnnfor8_b2.txt");
-	x = "";
-	while (fin3.getline(line, sizeof(line)))
-	{
-		std::stringstream  word(line);
-		for (int i = 0; i < 1; i++){
-			word >> x;
-			float y = stof(x);
-			paraB2.push_back(y);
-		}
-	}
-	fin3.clear();
-	fin3.close();
-	*/
 }
