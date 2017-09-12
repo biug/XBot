@@ -917,7 +917,7 @@ void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 	}
 
 	// check rush
-	if (state.being_rushed)
+	if (state.being_rushed || state.keep_build_sunken)
 	{
 		// terran
 		// max 4 sunken
@@ -934,6 +934,16 @@ void StrategyBossZerg::checkGroundDefenses(BuildOrderQueue & queue)
 		if (_enemy->getRace() == BWAPI::Races::Protoss)
 		{
 			int sunkenLimit = std::min(state.enemy_zealot_count + 1, 7);
+			if (state.sunken_colony_total + state.creep_colony_total < sunkenLimit && state.creep_colony_waiting == 0)
+			{
+				queue.queueAsHighestPriority(MacroAct(BWAPI::UnitTypes::Zerg_Creep_Colony, front));
+			}
+		}
+		// zerg
+		// no limit
+		if (_enemy->getRace() == BWAPI::Races::Zerg && state.keep_build_sunken)
+		{
+			int sunkenLimit = state.enemy_zergling_count / 5;
 			if (state.sunken_colony_total + state.creep_colony_total < sunkenLimit && state.creep_colony_waiting == 0)
 			{
 				queue.queueAsHighestPriority(MacroAct(BWAPI::UnitTypes::Zerg_Creep_Colony, front));

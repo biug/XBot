@@ -57,7 +57,7 @@ void Squad::update()
 	}
 
 	// TODO This is a crude stand-in for a real survey squad controller.
-	if (_order.getType() == SquadOrderTypes::Survey && BWAPI::Broodwar->getFrameCount() < 24)
+	if (_order.getType() == SquadOrderTypes::Survey)
 	{
 		doSurvey();
 	}

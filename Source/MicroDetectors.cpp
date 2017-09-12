@@ -48,6 +48,21 @@ void MicroDetectors::executeMicro(const BWAPI::Unitset & targets)
 
 	for (const auto detectorUnit : detectorUnits)
 	{
+		if (state.keep_build_sunken)
+		{
+			auto & info = InformationManager::Instance();
+			if (info.getEnemyMainBaseLocation() && info.getMyMainBaseLocation())
+			{
+				auto myArea = info.getTileArea(info.getMyMainBaseLocation()->getTilePosition());
+				auto enemyArea = info.getTileArea(info.getEnemyMainBaseLocation()->getTilePosition());
+				auto path = BWEM::Map::Instance().GetPath(myArea, enemyArea);
+				if (!path.empty())
+				{
+					Micro::SmartMove(detectorUnit, BWAPI::Position(path.front()->Center()));
+				}
+			}
+			continue;
+		}
 		if (!unitClosestToEnemy || !unitClosestToEnemy->getPosition().isValid()) continue;
 
 		// for anti cannon bot

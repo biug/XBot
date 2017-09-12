@@ -141,6 +141,8 @@
 		"UseEnemySpecificStrategy"  : true,
         "EnemySpecificStrategy"     :
         {
+        	"2"					: "FastSpireSteam",
+        	
 			"Steamhammer"		: "5PoolHard",
 			"MegaBot"			: "5PoolHard",
 			"Microwave"			: "ZvZ_Overpool9Gas",
@@ -248,6 +250,7 @@
  			"ZvP_10Hatch"			: { "Race" : "Zerg", "OpeningGroup" : "zergling_rush",   "OpeningBuildOrder" : ["5 x Drone", "go extractor trick drone", "hatchery @ expo", "go scout location", "spawning pool", "drone", "overlord", "3 x zergling", "drone", "zergling", "creep colony @ natural", "creep colony @ natural", "2 x drone", "2 x sunken colony", "2 x zergling", "4 x drone"] },
 			"ZvP_Over10Hatch"		: { "Race" : "Zerg", "OpeningGroup" : "zergling_rush",   "OpeningBuildOrder" : ["5 x Drone", "overlord", "go extractor trick drone", "hatchery @ expo", "go scout location", "spawning pool", "3 x drone", "3 x zergling", "creep colony @ natural", "drone", "sunken colony"] },
 
+			"FastSpireSteam"		: { "Race" : "Zerg", "OpeningBuildOrder" : ["5 x drone", "overlord", "go wait mineral until 250", "extractor", "spawning pool", "5 x drone", "go gas until 900", "go keep build sunken", "creep colony", "creep colony", "lair", "sunken colony", "drone", "sunken colony", "drone", "creep colony", "drone", "overlord", "sunken colony", "overlord", "spire", "6 x mutalisk"] },
            "11Gas10PoolSpire"		: { "Race" : "Zerg",    "OpeningBuildOrder" : ["4 x drone", "overlord", "3 x drone", "extractor", "go gas until 950", "spawning pool", "go scout location", "2 x drone", "lair", "3 x zergling", "drone", "metabolic boost", "zergling", "overlord", "Spire", "zergling", "drone", "creep colony", "zergling", "sunken colony", "zergling", "6 x mutalisk", "hatchery @ macro", "drone", "2 x zergling", "drone", "2 x zergling", "drone", "2 x zergling", "drone", "2 x zergling", "hatchery", "go start gas"] },
            "11Gas10PoolLurker"		: { "Race" : "Zerg",    "OpeningBuildOrder" : ["4 x drone", "overlord", "3 x drone", "extractor", "spawning pool", "go scout location", "2 x drone", "lair", "3 x zergling", "drone", "overlord", "hydralisk den", "drone", "lurker aspect", "metabolic boost", "4 x hydralisk", "zergling", "3 x lurker", "3 x zergling", "lurker", "hatchery"] },
 

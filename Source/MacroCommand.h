@@ -24,6 +24,8 @@ enum class MacroCommandType
 	, UntilFindEnemy
 	, DroneEnemyNatural
 	, IgnoreScoutWorker
+	, WaitMineralUntil
+	, KeepBuildSunken
 	};
 
 class MacroCommand
@@ -53,6 +55,8 @@ public:
 			, MacroCommandType::UntilFindEnemy
 			, MacroCommandType::DroneEnemyNatural
 			, MacroCommandType::IgnoreScoutWorker
+			, MacroCommandType::WaitMineralUntil
+			, MacroCommandType::KeepBuildSunken
 		};
 	}
 
@@ -93,7 +97,8 @@ public:
 		return
 			t == MacroCommandType::GasUntil ||
 			t == MacroCommandType::PullWorkers || 
-			t == MacroCommandType::PullWorkersLeaving;
+			t == MacroCommandType::PullWorkersLeaving ||
+			t == MacroCommandType::WaitMineralUntil;
 	}
 
 	static const std::string getName(MacroCommandType t)
@@ -165,6 +170,14 @@ public:
 		if (t == MacroCommandType::IgnoreScoutWorker)
 		{
 			return "go ignore scout worker";
+		}
+		if (t == MacroCommandType::WaitMineralUntil)
+		{
+			return "go wait mineral until";
+		}
+		if (t == MacroCommandType::KeepBuildSunken)
+		{
+			return "go keep build sunken";
 		}
 
 		UAB_ASSERT(t == MacroCommandType::None, "unrecognized MacroCommandType");

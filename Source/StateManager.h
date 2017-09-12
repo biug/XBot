@@ -307,6 +307,8 @@ namespace XBot
 
 		bool ignore_scout_worker = false;
 
+		bool keep_build_sunken = false;
+
 		void updateCurrentState(BuildOrderQueue &queue);
 
 		bool beingMarineRushed();

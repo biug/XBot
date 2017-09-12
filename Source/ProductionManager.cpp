@@ -13,6 +13,7 @@ ProductionManager::ProductionManager()
 	, _lastCreateFrame					 (0)
 	, _outOfBook                         (false)
 	, _targetGasAmount                   (0)
+	, _targetMineralAmount				 (0)
 	, _extractorTrickState			     (ExtractorTrick::None)
 	, _extractorTrickUnitType			 (BWAPI::UnitTypes::None)
 	, _extractorTrickBuilding			 (nullptr)
@@ -40,6 +41,15 @@ void ProductionManager::update()
 	{
 		WorkerManager::Instance().setCollectGas(false);
 		_targetGasAmount = 0;           // clear the target
+	}
+	if (_targetMineralAmount && BWAPI::Broodwar->self()->minerals() >= _targetMineralAmount)
+	{
+		_targetMineralAmount = 0;
+	}
+	// if has mineral target, wait until it comes to zero
+	if (_targetMineralAmount)
+	{
+		return;
 	}
 
 	// update status
@@ -671,6 +681,14 @@ void ProductionManager::executeCommand(MacroCommand command)
 	else if (cmd == MacroCommandType::IgnoreScoutWorker)
 	{
 		StateManager::Instance().ignore_scout_worker = true;
+	}
+	else if (cmd == MacroCommandType::WaitMineralUntil)
+	{
+		_targetMineralAmount = command.getAmount();
+	}
+	else if (cmd == MacroCommandType::KeepBuildSunken)
+	{
+		StateManager::Instance().keep_build_sunken = true;
 	}
 	else
 	{

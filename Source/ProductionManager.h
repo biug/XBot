@@ -24,6 +24,7 @@ class ProductionManager
 	int					_lastCreateFrame;
 	bool				_outOfBook;                      // production queue is beyond the opening book
 	int					_targetGasAmount;                // for "go gas until <n>"; set to 0 if no target
+	int					_targetMineralAmount;			// for "go wait mineral until <n>"
 	ExtractorTrick		_extractorTrickState;
 	BWAPI::UnitType		_extractorTrickUnitType;         // drone or zergling
 	Building *			_extractorTrickBuilding;         // set depending on the extractor trick state
