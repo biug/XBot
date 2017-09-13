@@ -781,7 +781,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 		nextInQueue != BWAPI::UnitTypes::Zerg_Hatchery &&
 		nextInQueue != BWAPI::UnitTypes::Zerg_Overlord &&
 		hatcheriesUnderConstruction <= 3 &&
-		!StateManager::Instance().being_rushed)
+		!state.being_rushed && !state.natural_dangerous)
 	{
 		MacroLocation loc = MacroLocation::Macro;
 		if (nHatches % 2 != 0 && nFreeBases > 2)
@@ -2225,7 +2225,8 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 	// However, some macro hatcheries may be placed at expansions.
 	if (nDrones > nMineralPatches + 3 * nGas && nFreeBases > 0 &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hatchery) &&
-		!StateManager::Instance().being_rushed)
+		!state.being_rushed &&
+		!state.natural_dangerous)
 	{
 		MacroLocation loc = MacroLocation::Expo;
 		// Be a little generous with minonly expansions
@@ -2273,7 +2274,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 		(minerals + 100) / (gas + 100) >= 3 && minerals > 350 &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor) &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hatchery) &&
-		!StateManager::Instance().being_rushed)
+		!state.being_rushed && !state.natural_dangerous)
 	{
 		// This asks for a gas base, but we didn't check whether any are available.
 		// If none are left, we'll get a mineral only.
@@ -2281,7 +2282,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 		mineralsLeft -= 300;
 	}
 	// E. Or being rushed
-	else if (StateManager::Instance().being_rushed && mineralsLeft > 450 && StateManager::Instance().hatchery_waiting == 0)
+	else if ((state.being_rushed || state.natural_dangerous) && mineralsLeft > 450 && state.hatchery_waiting == 0)
 	{
 		produce(MacroAct(BWAPI::UnitTypes::Zerg_Hatchery, MacroLocation::Macro));
 		mineralsLeft -= 300;

@@ -402,6 +402,16 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 			const auto mapCenter = BWAPI::Position(BWAPI::Broodwar->mapWidth() * 16, BWAPI::Broodwar->mapHeight() * 16);
 
 			std::string mapName = BWAPI::Broodwar->mapFileName();
+			int idx = 0;
+			if (!mapName.empty())
+			{
+				while ((idx = mapName.find(' ')) != std::string::npos)
+				{
+					mapName.erase(idx, 1);
+				}
+			}
+			std::transform(mapName.begin(), mapName.end(), mapName.begin(), ::tolower);
+
 			BWTA::BaseLocation * enemyThird = nullptr;
 			for (const auto & base : BWTA::getBaseLocations())
 			{
@@ -412,40 +422,27 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 				}
 			}
 
-			if (mapName.find("Benzene") != std::string::npos && enemyThird)
+			if (mapName.find("benzene") != std::string::npos && enemyThird)
 			{
 				// add third base
 				flyer_visit_position.push_back(enemyThird->getPosition());
 			}
 
-			if (mapName.find("Destination") != std::string::npos)
+			if (mapName.find("destination") != std::string::npos
+				|| mapName.find("python") != std::string::npos
+				|| mapName.find("heartbreakridge") != std::string::npos)
 			{
 				// do nothing
 			}
 
-			if (mapName.find("HeartbreakRidge") != std::string::npos)
-			{
-				// do nothing
-			}
-
-			if (mapName.find("Aztec") != std::string::npos && enemyThird)
-			{
-				double myMain2EnemyNatural = myMainPos.getDistance(enemyNaturalPos);
-				double enemyMain2EnemyNatural = enemyMainPos.getDistance(enemyNaturalPos);
-				double myMain2EnemyMain = myMainPos.getDistance(enemyMainPos);
-				if (myMain2EnemyNatural * myMain2EnemyNatural + enemyMain2EnemyNatural * enemyMain2EnemyNatural <
-					myMain2EnemyMain * myMain2EnemyMain)
-				{
-					// add third base
-					flyer_visit_position.push_back(enemyThird->getPosition());
-				}
-				else
-				{
-					// do nothing
-				}
-			}
-
-			if (mapName.find("TauCross") != std::string::npos && enemyThird)
+			if ((mapName.find("taucross") != std::string::npos
+				|| mapName.find("aztec") != std::string::npos
+				|| mapName.find("fightingspirit") != std::string::npos
+				|| mapName.find("jade") != std::string::npos
+				|| mapName.find("lamancha") != std::string::npos
+				|| mapName.find("electriccircuit") != std::string::npos
+				|| mapName.find("fortress") != std::string::npos)
+				&& enemyThird)
 			{
 				double myMain2EnemyNatural = myMainPos.getDistance(enemyNaturalPos);
 				double enemyMain2EnemyNatural = enemyMainPos.getDistance(enemyNaturalPos);
@@ -463,7 +460,51 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 				}
 			}
 
-			if (mapName.find("Andromeda") != std::string::npos && enemyThird)
+			if (mapName.find("neomoonglaive") != std::string::npos && enemyThird)
+			{
+				double myMain2EnemyNatural = myMainPos.getDistance(enemyNaturalPos);
+				double enemyMain2EnemyNatural = enemyMainPos.getDistance(enemyNaturalPos);
+				double myMain2EnemyMain = myMainPos.getDistance(enemyMainPos);
+				// ¶Û½Ç
+				if (myMain2EnemyNatural * myMain2EnemyNatural + enemyMain2EnemyNatural * enemyMain2EnemyNatural <
+					myMain2EnemyMain * myMain2EnemyMain)
+				{
+					// add center
+					flyer_visit_position.push_back((enemyMainPos + enemyThird->getPosition()) / 2);
+				}
+				else
+				{
+					// do nothing
+				}
+			}
+
+			if ((mapName.find("roadrunner") != std::string::npos
+				|| mapName.find("icarus") != std::string::npos)
+				&& enemyThird)
+			{
+				double myMain2EnemyNatural = myMainPos.getDistance(enemyNaturalPos);
+				double enemyMain2EnemyNatural = enemyMainPos.getDistance(enemyNaturalPos);
+				double myMain2EnemyMain = myMainPos.getDistance(enemyMainPos);
+				// cross
+				auto mid = (myMainPos + enemyMainPos) / 2;
+				if (mid.getDistance(mapCenter) < 300)
+				{
+					// do nothing
+				}
+				// ¶Û½Ç
+				else if (myMain2EnemyNatural * myMain2EnemyNatural + enemyMain2EnemyNatural * enemyMain2EnemyNatural <
+					myMain2EnemyMain * myMain2EnemyMain)
+				{
+					// add third
+					flyer_visit_position.push_back(enemyThird->getPosition());
+				}
+				else
+				{
+					// do nothing
+				}
+			}
+
+			if (mapName.find("andromeda") != std::string::npos && enemyThird)
 			{
 				const auto enemyThirdPos = enemyThird->getPosition();
 				// vertical
@@ -487,7 +528,7 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 				}
 			}
 
-			if (mapName.find("CircuitBreaker") != std::string::npos && enemyThird)
+			if (mapName.find("circuitbreaker") != std::string::npos && enemyThird)
 			{
 				// vertical
 				if (abs(myMainPos.x - enemyMainPos.x) < 800)
@@ -510,7 +551,7 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 				}
 			}
 
-			if (mapName.find("EmpireoftheSun") != std::string::npos && enemyThird)
+			if (mapName.find("empireofthesun") != std::string::npos && enemyThird)
 			{
 				// vertical
 				if (abs(myMainPos.x - enemyMainPos.x) < 800)
@@ -531,29 +572,6 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 					// add third base
 					flyer_visit_position.push_back(enemyThird->getPosition());
 				}
-			}
-
-			if (mapName.find("Fortress") != std::string::npos && enemyThird)
-			{
-				double myMain2EnemyNatural = myMainPos.getDistance(enemyNaturalPos);
-				double enemyMain2EnemyNatural = enemyMainPos.getDistance(enemyNaturalPos);
-				double myMain2EnemyMain = myMainPos.getDistance(enemyMainPos);
-				// ¶Û½Ç
-				if (myMain2EnemyNatural * myMain2EnemyNatural + enemyMain2EnemyNatural * enemyMain2EnemyNatural <
-					myMain2EnemyMain * myMain2EnemyMain)
-				{
-					// add third base
-					flyer_visit_position.push_back(enemyThird->getPosition());
-				}
-				else
-				{
-					// do nothing
-				}
-			}
-
-			if (mapName.find("Python") != std::string::npos)
-			{
-				// do nothing
 			}
 
 			// last visit enemy Main
@@ -566,6 +584,25 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 		for (int i = 0; i < flyer_visit_position.size() - 1; ++i)
 		{
 			BWAPI::Broodwar->drawLineMap(flyer_visit_position[i], flyer_visit_position[i + 1], BWAPI::Colors::Cyan);
+		}
+	}
+
+	if (mutalisk_completed >= 12) keep_build_sunken = false;
+
+	auto natural = InformationManager::Instance().getMyNaturalLocation();
+	if (natural)
+	{
+		int enemyInNatural = 0;
+		for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+		{
+			if (uinfo.second.lastPosition.getDistance(natural->getPosition()) < 300)
+			{
+				++enemyInNatural;
+			}
+		}
+		if (enemyInNatural > 6)
+		{
+			natural_dangerous = true;
 		}
 	}
 }

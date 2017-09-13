@@ -20,7 +20,7 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 	const BWAPI::Unitset & flyerUnits = getUnits();
 
 	BWAPI::Unitset flyerUnitTargets;
-	BWAPI::Unitset staticAirWeapon;
+	std::hash_set<const UnitInfo*> staticAirWeapons;
 	for (const auto target : targets)
 	{
 		if (target->isVisible() &&
@@ -32,11 +32,14 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 			!target->isUnderDisruptionWeb())             // melee unit can't attack under dweb
 		{
 			flyerUnitTargets.insert(target);
-			if ((target->getType().isBuilding() && target->getType().airWeapon() != BWAPI::WeaponTypes::None)
-				|| target->getType() == BWAPI::UnitTypes::Terran_Bunker)
-			{
-				staticAirWeapon.insert(target);
-			}
+		}
+	}
+	for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+	{
+		auto type = uinfo.second.type;
+		if ((type.isBuilding() && type.airWeapon() != BWAPI::WeaponTypes::None) || type == BWAPI::UnitTypes::Terran_Bunker)
+		{
+			staticAirWeapons.insert(&uinfo.second);
 		}
 	}
 
@@ -50,8 +53,43 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 	auto & state = StateManager::Instance();
 	const auto & visit_target = state.flyer_visit_position;
 
+	std::hash_set<BWAPI::TilePosition> dangerousTile;
+	for (const auto & staticAirWeapon : staticAirWeapons)
+	{
+		auto center = staticAirWeapon->lastTilePosition;
+		auto radius = staticAirWeapon->type.airWeapon().maxRange() / 32;
+		for (int x = center.x - radius; x <= center.x + radius; ++x)
+		{
+			for (int y = center.y - radius; y <= center.y + radius; ++y)
+			{
+				if (center.getDistance(BWAPI::TilePosition(x, y)) <= radius + 0.5)
+				{
+					dangerousTile.insert(BWAPI::TilePosition(x, y));
+				}
+			}
+		}
+	}
+	std::hash_map<const BWEM::Area*, int> areaFlyers;
+	for (const auto & flyerUnit : flyerUnits)
+	{
+		auto area = InformationManager::Instance().getTileArea(flyerUnit->getTilePosition());
+		areaFlyers[area] += 1;
+	}
+	auto baseArea = InformationManager::Instance().getTileArea(BWAPI::Broodwar->self()->getStartLocation());
+
 	for (const auto flyerUnit : flyerUnits)
 	{
+		auto area = InformationManager::Instance().getTileArea(flyerUnit->getTilePosition());
+		if (areaFlyers[area] < 6 && dangerousTile.find(BWAPI::TilePosition(flyerUnit->getTilePosition())) != dangerousTile.end())
+		{
+			auto path = BWEM::Map::Instance().GetPath(area, baseArea);
+			if (!path.empty())
+			{
+				Micro::SmartMove(flyerUnit, BWAPI::Position(path[0]->Center()));
+				continue;
+			}
+		}
+
 		// for anti cannon bot
 		if (!visit_target.empty())
 		{

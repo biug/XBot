@@ -9,7 +9,7 @@
 using namespace XBot;
 
 // Parse the JSON configuration file into Config:: variables.
-void ParseUtils::ParseConfigFile(const std::string & filename)
+void ParseUtils::ParseConfigStr()
 {
     rapidjson::Document doc;
 
@@ -31,16 +31,9 @@ void ParseUtils::ParseConfigFile(const std::string & filename)
 	UAB_ASSERT(mapSize >= 2 && mapSize <= 8, "bad map size");
 	const std::string mapWeightString = std::string("Weight") + std::string("012345678").at(mapSize);
 
-    std::string config = FileUtils::ReadFile(filename);
-
-    if (config.length() == 0)
-    {
-        return;
-    }
-
     Config::ConfigFile::ConfigFileFound = true;
 
-    bool parsingFailed = doc.Parse(config.c_str()).HasParseError();
+    bool parsingFailed = doc.Parse(Config::ConfigFileStr.c_str()).HasParseError();
     if (parsingFailed)
     {
         return;

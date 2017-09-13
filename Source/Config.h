@@ -10,7 +10,6 @@ namespace Config
     {
         extern bool ConfigFileFound;
         extern bool ConfigFileParsed;
-        extern std::string ConfigFileLocation;
     }
 
     namespace BotInfo
@@ -116,4 +115,6 @@ namespace Config
 	{
 		extern std::hash_set<std::string> CannonProtoss;
 	}
+
+	extern std::string ConfigFileStr;
 }

@@ -309,6 +309,8 @@ namespace XBot
 
 		bool keep_build_sunken = false;
 
+		bool natural_dangerous = false;
+
 		void updateCurrentState(BuildOrderQueue &queue);
 
 		bool beingMarineRushed();

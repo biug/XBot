@@ -7,7 +7,7 @@ namespace XBot
 {
 namespace ParseUtils
 {
-    void ParseConfigFile(const std::string & filename);
+    void ParseConfigStr();
     void ParseTextCommand(const std::string & commandLine);
     BWAPI::Race GetRace(const std::string & raceName);
 

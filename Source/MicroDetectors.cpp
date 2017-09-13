@@ -50,6 +50,7 @@ void MicroDetectors::executeMicro(const BWAPI::Unitset & targets)
 	{
 		if (state.keep_build_sunken)
 		{
+			BWAPI::Broodwar->drawTextScreen(200, 190, "%c move detector 1", cyan);
 			auto & info = InformationManager::Instance();
 			if (info.getEnemyMainBaseLocation() && info.getMyMainBaseLocation())
 			{
@@ -58,6 +59,7 @@ void MicroDetectors::executeMicro(const BWAPI::Unitset & targets)
 				auto path = BWEM::Map::Instance().GetPath(myArea, enemyArea);
 				if (!path.empty())
 				{
+					BWAPI::Broodwar->drawTextScreen(200, 200, "%c move detector 2", cyan);
 					Micro::SmartMove(detectorUnit, BWAPI::Position(path.front()->Center()));
 				}
 			}

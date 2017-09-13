@@ -38,7 +38,7 @@ void XBotModule::onStart()
 	// Change this file path to point to your config file.
     // Any relative path name will be relative to Starcraft installation folder
 	// The config depends on the map and must be read after the map is analyzed.
-    ParseUtils::ParseConfigFile(Config::ConfigFile::ConfigFileLocation);
+    ParseUtils::ParseConfigStr();
 
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(Config::BWAPIOptions::SetLocalSpeed);
@@ -82,7 +82,6 @@ void XBotModule::onFrame()
         BWAPI::Broodwar->drawTextScreen(10, 30, "%c%s will not run without its configuration file", white, Config::BotInfo::BotName.c_str());
         BWAPI::Broodwar->drawTextScreen(10, 45, "%cCheck that the file below exists. Incomplete paths are relative to Starcraft directory", white);
         BWAPI::Broodwar->drawTextScreen(10, 60, "%cYou can change this file location in Config::ConfigFile::ConfigFileLocation", white);
-        BWAPI::Broodwar->drawTextScreen(10, 75, "%cFile Not Found (or is empty): %c %s", white, green, Config::ConfigFile::ConfigFileLocation.c_str());
         return;
     }
     else if (!Config::ConfigFile::ConfigFileParsed)
@@ -93,7 +92,6 @@ void XBotModule::onFrame()
         BWAPI::Broodwar->setTextSize(BWAPI::Text::Size::Default);
         BWAPI::Broodwar->drawTextScreen(10, 30, "%c%s will not run without a properly formatted configuration file", white, Config::BotInfo::BotName.c_str());
         BWAPI::Broodwar->drawTextScreen(10, 45, "%cThe configuration file was found, but could not be parsed. Check that it is valid JSON", white);
-        BWAPI::Broodwar->drawTextScreen(10, 60, "%cFile Not Parsed: %c %s", white, green, Config::ConfigFile::ConfigFileLocation.c_str());
         return;
     }
 

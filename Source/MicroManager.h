@@ -11,9 +11,8 @@ namespace XBot
 
 class MicroManager
 {
-	BWAPI::Unitset		_units;
-
 protected:
+	BWAPI::Unitset		_units;
 	
 	SquadOrder			order;
 
