@@ -233,7 +233,7 @@ BWAPI::TilePosition BuildingPlacer::getCreepLocation(const Building & b, int bui
 	}
 	if (!choke.isValid()) return BWAPI::TilePositions::None;
 	
-	if (StateManager::Instance().being_rushed || StateManager::Instance().keep_build_sunken)
+	if (StateManager::Instance().being_rushed)
 	{
 		for (int dis = 8; dis >= 4; --dis)
 		{

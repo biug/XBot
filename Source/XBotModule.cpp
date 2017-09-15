@@ -56,7 +56,7 @@ void XBotModule::onStart()
 
     if (Config::BotInfo::PrintInfoOnStart)
     {
-        BWAPI::Broodwar->printf("%s by %s, based on XBot.", Config::BotInfo::BotName.c_str(), Config::BotInfo::Authors.c_str());
+        BWAPI::Broodwar->printf("%s by %s, based on Steamhammer.", Config::BotInfo::BotName.c_str(), Config::BotInfo::Authors.c_str());
     }
 
 	StrategyManager::Instance().setOpeningGroup();

@@ -17,6 +17,7 @@ void MicroFlyers::executeMicro(const BWAPI::Unitset & targets)
 
 void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 {
+	auto & info = InformationManager::Instance();
 	const BWAPI::Unitset & flyerUnits = getUnits();
 
 	BWAPI::Unitset flyerUnitTargets;
@@ -34,7 +35,7 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 			flyerUnitTargets.insert(target);
 		}
 	}
-	for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+	for (const auto & uinfo : info.getUnitInfo(BWAPI::Broodwar->enemy()))
 	{
 		auto type = uinfo.second.type;
 		if ((type.isBuilding() && type.airWeapon() != BWAPI::WeaponTypes::None) || type == BWAPI::UnitTypes::Terran_Bunker)
@@ -43,8 +44,8 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 		}
 	}
 
-	const auto myMainLoc = InformationManager::Instance().getMyMainBaseLocation();
-	const auto enemyMainLoc = InformationManager::Instance().getEnemyMainBaseLocation();
+	const auto myMainLoc = info.getMyMainBaseLocation();
+	const auto enemyMainLoc = info.getEnemyMainBaseLocation();
 	if (!enemyMainLoc || !myMainLoc)
 	{
 		return;
@@ -53,40 +54,41 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 	auto & state = StateManager::Instance();
 	const auto & visit_target = state.flyer_visit_position;
 
-	std::hash_set<BWAPI::TilePosition> dangerousTile;
-	for (const auto & staticAirWeapon : staticAirWeapons)
-	{
-		auto center = staticAirWeapon->lastTilePosition;
-		auto radius = staticAirWeapon->type.airWeapon().maxRange() / 32;
-		for (int x = center.x - radius; x <= center.x + radius; ++x)
-		{
-			for (int y = center.y - radius; y <= center.y + radius; ++y)
-			{
-				if (center.getDistance(BWAPI::TilePosition(x, y)) <= radius + 0.5)
-				{
-					dangerousTile.insert(BWAPI::TilePosition(x, y));
-				}
-			}
-		}
-	}
 	std::hash_map<const BWEM::Area*, int> areaFlyers;
 	for (const auto & flyerUnit : flyerUnits)
 	{
-		auto area = InformationManager::Instance().getTileArea(flyerUnit->getTilePosition());
+		auto area = info.getTileArea(flyerUnit->getTilePosition());
 		areaFlyers[area] += 1;
 	}
-	auto baseArea = InformationManager::Instance().getTileArea(BWAPI::Broodwar->self()->getStartLocation());
+	auto baseArea = info.getTileArea(BWAPI::Broodwar->self()->getStartLocation());
 
 	for (const auto flyerUnit : flyerUnits)
 	{
-		auto area = InformationManager::Instance().getTileArea(flyerUnit->getTilePosition());
-		if (areaFlyers[area] < 6 && dangerousTile.find(BWAPI::TilePosition(flyerUnit->getTilePosition())) != dangerousTile.end())
+		auto area = info.getTileArea(flyerUnit->getTilePosition());
+		if (state.base_dangerous)
 		{
-			auto path = BWEM::Map::Instance().GetPath(area, baseArea);
-			if (!path.empty())
+			Micro::SmartAttackMove(flyerUnit, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+			continue;
+		}
+		if (areaFlyers[area] < 6)
+		{
+			const UnitInfo* nearestAirWeapon = nullptr;
+			for (const auto & staticAirWeapon : staticAirWeapons)
 			{
-				Micro::SmartMove(flyerUnit, BWAPI::Position(path[0]->Center()));
-				continue;
+				if (!nearestAirWeapon
+					|| flyerUnit->getDistance(staticAirWeapon->lastPosition) < flyerUnit->getDistance(nearestAirWeapon->lastPosition))
+				{
+					nearestAirWeapon = staticAirWeapon;
+				}
+			}
+			if (nearestAirWeapon && flyerUnit->getDistance(nearestAirWeapon->lastPosition) < nearestAirWeapon->type.airWeapon().maxRange() + 96)
+			{
+				auto path = BWEM::Map::Instance().GetPath(area, baseArea);
+				if (!path.empty())
+				{
+					Micro::SmartMove(flyerUnit, BWAPI::Position(path[0]->Center()));
+					continue;
+				}
 			}
 		}
 

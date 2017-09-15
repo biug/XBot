@@ -308,7 +308,8 @@ namespace XBot
 		bool ignore_scout_worker = false;
 
 		bool keep_build_sunken = false;
-
+		
+		bool base_dangerous = false;
 		bool natural_dangerous = false;
 
 		void updateCurrentState(BuildOrderQueue &queue);

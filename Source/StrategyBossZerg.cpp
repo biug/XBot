@@ -2282,7 +2282,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 		mineralsLeft -= 300;
 	}
 	// E. Or being rushed
-	else if ((state.being_rushed || state.natural_dangerous) && mineralsLeft > 450 && state.hatchery_waiting == 0)
+	else if ((state.being_rushed || state.natural_dangerous) && mineralsLeft > 450 && state.hatchery_waiting == 0 && state.hatchery_count == state.hatchery_completed)
 	{
 		produce(MacroAct(BWAPI::UnitTypes::Zerg_Hatchery, MacroLocation::Macro));
 		mineralsLeft -= 300;

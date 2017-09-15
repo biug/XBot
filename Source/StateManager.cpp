@@ -589,18 +589,50 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 
 	if (mutalisk_completed >= 12) keep_build_sunken = false;
 
+	auto base = InformationManager::Instance().getMyMainBaseLocation();
+	if (base)
+	{
+		int enemyInBase = 0;
+		for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+		{
+			if (uinfo.second.lastPosition.getDistance(base->getPosition()) < 256)
+			{
+				++enemyInBase;
+			}
+		}
+		int ratio = 0;
+		switch (BWAPI::Broodwar->enemy()->getRace().getID())
+		{
+		case BWAPI::Races::Enum::Terran:
+			ratio = 4;
+			break;
+		case BWAPI::Races::Enum::Zerg:
+			ratio = 6;
+			break;
+		case BWAPI::Races::Enum::Protoss:
+			ratio = 2;
+			break;
+		default:
+			ratio = 2;
+		}
+		if (enemyInBase - sunken_colony_completed * ratio >= 6)
+		{
+			base_dangerous = true;
+		}
+	}
+
 	auto natural = InformationManager::Instance().getMyNaturalLocation();
 	if (natural)
 	{
 		int enemyInNatural = 0;
 		for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
 		{
-			if (uinfo.second.lastPosition.getDistance(natural->getPosition()) < 300)
+			if (uinfo.second.lastPosition.getDistance(natural->getPosition()) < 256)
 			{
 				++enemyInNatural;
 			}
 		}
-		if (enemyInNatural > 6)
+		if (enemyInNatural > 12)
 		{
 			natural_dangerous = true;
 		}
