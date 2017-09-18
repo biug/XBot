@@ -381,6 +381,7 @@ void CombatCommander::updateBaseDefenseSquads()
 		const int numDefendersPerEnemyUnit = 2;
 
 		// all of the enemy units in this region
+		int workerInRegion = 0;
 		BWAPI::Unitset enemyUnitsInRegion;
         for (const auto unit : BWAPI::Broodwar->enemy()->getUnits())
         {
@@ -396,20 +397,27 @@ void CombatCommander::updateBaseDefenseSquads()
             if (BWTA::getRegion(BWAPI::TilePosition(unit->getPosition())) == myRegion)
             {
                 enemyUnitsInRegion.insert(unit);
+				if (unit->getType().isWorker())
+				{
+					++workerInRegion;
+				}
             }
         }
 
         // we ignore the first enemy worker in our region since we assume it is a scout
 		// This is because we can't catch it early. Should skip this check when we can. 
 		// TODO replace with something sensible
-        for (const auto unit : enemyUnitsInRegion)
-        {
-            if (unit->getType().isWorker())
-            {
-                enemyUnitsInRegion.erase(unit);
-                break;
-            }
-        }
+		if (workerInRegion == 1)
+		{
+			for (const auto unit : enemyUnitsInRegion)
+			{
+				if (unit->getType().isWorker())
+				{
+					enemyUnitsInRegion.erase(unit);
+					break;
+				}
+			}
+		}
 
         std::stringstream squadName;
         squadName << "Base Defense " << regionCenter.x << " " << regionCenter.y; 
@@ -481,7 +489,8 @@ void CombatCommander::updateBaseDefenseSquads()
 		// Pulling workers (as implemented) can lead to big losses.
 		bool pullWorkers =
 			Config::Micro::WorkersDefendRush &&
-			(!sunkenDefender && numZerglingsInOurBase() > 0 || buildingRush());
+			((!sunkenDefender && numZerglingsInOurBase() > 0) || buildingRush() || workerInRegion > 1);
+		BWAPI::Broodwar->drawTextScreen(200, 250, "workerInRegion=%d", workerInRegion);
 
 		updateDefenseSquadUnits(defenseSquad, flyingDefendersNeeded, groundDefendersNeeded, pullWorkers);
     }
