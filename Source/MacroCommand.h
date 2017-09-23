@@ -26,6 +26,8 @@ enum class MacroCommandType
 	, IgnoreScoutWorker
 	, WaitMineralUntil
 	, KeepBuildSunken
+	, RallyAtNatural
+	, StopRally
 	};
 
 class MacroCommand
@@ -38,7 +40,7 @@ public:
 	static const std::list<MacroCommandType> allCommandTypes()
 	{
 		return std::list<MacroCommandType>
-			{ MacroCommandType::Scout
+		{ MacroCommandType::Scout
 			, MacroCommandType::ScoutIfNeeded
 			, MacroCommandType::ScoutLocation
 			, MacroCommandType::StartGas
@@ -57,6 +59,8 @@ public:
 			, MacroCommandType::IgnoreScoutWorker
 			, MacroCommandType::WaitMineralUntil
 			, MacroCommandType::KeepBuildSunken
+			, MacroCommandType::RallyAtNatural
+			, MacroCommandType::StopRally
 		};
 	}
 
@@ -178,6 +182,14 @@ public:
 		if (t == MacroCommandType::KeepBuildSunken)
 		{
 			return "go keep build sunken";
+		}
+		if (t == MacroCommandType::RallyAtNatural)
+		{
+			return "go rally at natural";
+		}
+		if (t == MacroCommandType::StopRally)
+		{
+			return "go stop rally";
 		}
 
 		UAB_ASSERT(t == MacroCommandType::None, "unrecognized MacroCommandType");

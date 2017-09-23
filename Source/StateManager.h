@@ -312,6 +312,10 @@ namespace XBot
 		bool base_dangerous = false;
 		bool natural_dangerous = false;
 
+		bool cannon_in_enemy_base = false;
+
+		bool rally_at_natural = false;
+
 		void updateCurrentState(BuildOrderQueue &queue);
 
 		bool beingMarineRushed();

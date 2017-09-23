@@ -637,6 +637,19 @@ void StateManager::updateCurrentState(BuildOrderQueue &queue)
 			natural_dangerous = true;
 		}
 	}
+
+	auto enemyBase = InformationManager::Instance().getEnemyMainBaseLocation();
+	if (enemyBase && !cannon_in_enemy_base)
+	{
+		for (const auto & uinfo : InformationManager::Instance().getUnitInfo(BWAPI::Broodwar->enemy()))
+		{
+			if (uinfo.second.type == BWAPI::UnitTypes::Protoss_Photon_Cannon &&
+				uinfo.second.lastPosition.getDistance(enemyBase->getPosition()) < 350)
+			{
+				cannon_in_enemy_base = true;
+			}
+		}
+	}
 }
 
 bool StateManager::beingMarineRushed()

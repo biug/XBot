@@ -780,7 +780,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 	if (outOfBook && minerals >= 300 && nLarvas == 0 && nHatches < 15 && nDrones > 9 &&
 		nextInQueue != BWAPI::UnitTypes::Zerg_Hatchery &&
 		nextInQueue != BWAPI::UnitTypes::Zerg_Overlord &&
-		hatcheriesUnderConstruction <= 3 &&
+		hatcheriesUnderConstruction <= 1 &&
 		!state.being_rushed && !state.natural_dangerous)
 	{
 		MacroLocation loc = MacroLocation::Macro;
@@ -820,8 +820,7 @@ void StrategyBossZerg::makeUrgentReaction(BuildOrderQueue & queue)
 		}
 		else if (nEvo == 0 && nDrones >= 9 && outOfBook && hasPool &&
 			!queue.anyInQueue(BWAPI::UnitTypes::Zerg_Evolution_Chamber) &&
-			state.evolution_chamber_count == 0 &&
-			!isBeingBuilt(BWAPI::UnitTypes::Zerg_Evolution_Chamber))
+			state.evolution_chamber_total == 0)
 		{
 			queue.queueAsHighestPriority(BWAPI::UnitTypes::Zerg_Evolution_Chamber);
 		}
@@ -2104,8 +2103,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 	// Get hydralisk den if it's next.					//qi: 何时可以制造刺蛇塔
 	if ((_techTarget == TechUnit::Hydralisks || _techTarget == TechUnit::Lurkers && lurkerDenTiming()) &&
 		!hasDen && hasPool && nDrones >= 10 && nGas > 0 &&
-		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hydralisk_Den) &&
-		state.hydralisk_den_count == 0)
+		state.hydralisk_den_total == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Hydralisk_Den);
 		mineralsLeft -= 100;
@@ -2178,7 +2176,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 			nDrones >= 24 ||
 			_enemyRace != BWAPI::Races::Zerg && nDrones >= 20) &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Queens_Nest) &&
-		state.queens_nest_count == 0)
+		state.queens_nest_total == 0)
 	{
 		produce(BWAPI::UnitTypes::Zerg_Queens_Nest);
 		mineralsLeft -= 150;
@@ -2224,7 +2222,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 	// Division of labor: Expansions are here, macro hatcheries are "urgent production issues".
 	// However, some macro hatcheries may be placed at expansions.
 	if (nDrones > nMineralPatches + 3 * nGas && nFreeBases > 0 &&
-		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hatchery) &&
+		state.hatchery_waiting == 0 &&
 		!state.being_rushed &&
 		!state.natural_dangerous)
 	{
@@ -2273,7 +2271,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 		nDrones > 3 * InformationManager::Instance().getNumBases(_self) + 3 * nGas + 5 &&
 		(minerals + 100) / (gas + 100) >= 3 && minerals > 350 &&
 		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Extractor) &&
-		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Hatchery) &&
+		state.hatchery_waiting == 0 &&
 		!state.being_rushed && !state.natural_dangerous)
 	{
 		// This asks for a gas base, but we didn't check whether any are available.
@@ -2291,7 +2289,7 @@ BuildOrder & StrategyBossZerg::freshProductionPlan()
 	// Prepare an evo chamber or two.				// qi：进化腔
 	// Terran doesn't want the first evo until after den or spire.
 	if (hasPool && nGas > 0 && !_emergencyGroundDefense &&
-		!isBeingBuilt(BWAPI::UnitTypes::Zerg_Evolution_Chamber))
+		state.evolution_chamber_total < 2)
 	{
 		if (nEvo == 0 && nDrones >= 18 && (_enemyRace != BWAPI::Races::Terran || hasDen || hasSpire || hasUltra) ||
 			nEvo == 1 && nDrones >= 30 && nGas >= 2 && (hasDen || hasSpire || hasUltra) && _self->isUpgrading(BWAPI::UpgradeTypes::Zerg_Carapace))

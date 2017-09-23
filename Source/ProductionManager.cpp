@@ -690,6 +690,14 @@ void ProductionManager::executeCommand(MacroCommand command)
 	{
 		StateManager::Instance().keep_build_sunken = true;
 	}
+	else if (cmd == MacroCommandType::RallyAtNatural)
+	{
+		StateManager::Instance().rally_at_natural = true;
+	}
+	else if (cmd == MacroCommandType::StopRally)
+	{
+		StateManager::Instance().rally_at_natural = false;
+	}
 	else
 	{
 		UAB_ASSERT(false, "unknown MacroCommand");

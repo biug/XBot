@@ -65,11 +65,6 @@ void MicroFlyers::assignTargets(const BWAPI::Unitset & targets)
 	for (const auto flyerUnit : flyerUnits)
 	{
 		auto area = info.getTileArea(flyerUnit->getTilePosition());
-		if (state.base_dangerous)
-		{
-			Micro::SmartAttackMove(flyerUnit, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
-			continue;
-		}
 		if (areaFlyers[area] < 6)
 		{
 			const UnitInfo* nearestAirWeapon = nullptr;

@@ -868,6 +868,13 @@ BWAPI::Position CombatCommander::getMainAttackLocation(const Squad * squad)
 	// Otherwise we are aggressive. Try to find a spot to attack.
 
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getEnemyMainBaseLocation();
+	BWTA::BaseLocation * naturalLocation = InformationManager::Instance().getMyNaturalLocation();
+
+	// if rally at enemy natural
+	if (naturalLocation && StateManager::Instance().rally_at_natural)
+	{
+		return naturalLocation->getPosition();
+	}
 
 	// First choice: Attack the enemy main unless we think it's empty.
 	if (enemyBaseLocation)

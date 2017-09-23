@@ -14,7 +14,6 @@ TimerManager::TimerManager()
 	_timerNames.push_back("Scout");
 	_timerNames.push_back("UnitInfo");
 	_timerNames.push_back("MapGrid");
-	_timerNames.push_back("Search");
 }
 
 void TimerManager::startTimer(const TimerManager::Type t)

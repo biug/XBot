@@ -1,5 +1,6 @@
 #include "Squad.h"
 #include "UnitUtil.h"
+#include "StateManager.h"
 #include "StrategyManager.h"
 
 using namespace XBot;
@@ -601,7 +602,11 @@ void Squad::doSurvey()
 	{
 		//如果没发现基地
 		const auto & enemyMainLoc = InformationManager::Instance().getEnemyMainBaseLocation();
-		if (!enemyMainLoc || !BWAPI::Broodwar->isExplored(enemyMainLoc->getTilePosition()))
+		if (enemyMainLoc && StateManager::Instance().cannon_in_enemy_base)
+		{
+			Micro::SmartMove(surveyor, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+		}
+		else if (!enemyMainLoc || !BWAPI::Broodwar->isExplored(enemyMainLoc->getTilePosition()))
 		{
 			//顺时针探路
 			std::vector<BWAPI::TilePosition> starts;
